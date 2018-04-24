@@ -47,7 +47,7 @@ void main ( void )
 }
 ```
 
-## Exection test:
+## Execution test:
 ```C
 $ gcc main.c freeOnExit.c -pthread 
 $ valgrind ./a.out
