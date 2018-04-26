@@ -23,6 +23,17 @@
 #include <sys/shm.h>
 #include <signal.h>
 #include <pthread.h>
+#include <stdarg.h>
+
+typedef enum
+{
+    sOET_ptr, // pointer
+    sOET_fd, // file descriptor
+    sOET_sm, // shared memory
+    sOET_tj, // thread need to be joined
+    sOET_tk, // thread need to be killed
+}
+steOnExitType;
 
 static void onExit ( void );
 
@@ -35,10 +46,10 @@ static uint64_t fdSize = 0; // nombre de fd à fermer
 static void **sh;          // pointeur qui sauvegarde les differents file descripteur à fermer
 static uint64_t shSize = 0; // nombre de fd à fermer
 
-static pthread_t **thJ;    // pointeur qui sauvegarde les differents pointeur sur threads
+static pthread_t *thJ;    // pointeur qui sauvegarde les differents pointeur sur threads
 static uint64_t thJSize = 0; // nombre de thread à kill
 
-static pthread_t **thK;    // pointeur qui sauvegarde les differents pointeur sur threads
+static pthread_t *thK;    // pointeur qui sauvegarde les differents pointeur sur threads
 static uint64_t thKSize = 0; // nombre de thread à kill
 
 typedef void ( *fnPtr )( void * );
@@ -54,42 +65,112 @@ static uint64_t fnBSize = 0;
 
 int initFreeOnExit ( void )
 {
-	ptr = ( void ** ) malloc ( sizeof ( void * ) );
-	fd = ( int ** ) malloc ( sizeof ( int * ) );
-	sh = ( void ** ) malloc ( sizeof ( void * ) );
-	thJ = ( pthread_t ** ) malloc ( sizeof ( pthread_t * ) );
-	thK = ( pthread_t ** ) malloc ( sizeof ( pthread_t * ) );
-	fnA = ( fnPtr * ) malloc ( sizeof ( fnPtr ) );
-	fnAArg = ( void ** ) malloc ( sizeof ( void * ) );
-	fnB = ( fnPtr * ) malloc ( sizeof ( fnPtr ) );
-	fnBArg = ( void ** ) malloc ( sizeof ( void * ) );
+    ptr = malloc ( sizeof ( *ptr ) );
+    fd = malloc ( sizeof ( *fd ) );
+    sh = malloc ( sizeof ( *sh ) );
+    thJ = malloc ( sizeof ( *thJ ) );
+    thK = malloc ( sizeof ( *thK ) );
+    fnA = malloc ( sizeof ( *fnA) );
+    fnAArg =  malloc ( sizeof ( *fnAArg ) );
+    fnB =  malloc ( sizeof ( *fnB ) );
+    fnBArg =  malloc ( sizeof ( *fnBArg ) );
 
-	return ( atexit ( onExit ) );
+    return ( atexit ( onExit ) );
+}
+
+int setOnExit ( steOnExitType type, int nbEls, ... )
+{
+    void *** p = NULL;
+    uint64_t * lSize = 0;
+    void ** tmp = NULL;
+    int i = 0;
+    va_list vl;
+
+    switch ( type )
+    {
+        case sOET_ptr:
+        {
+            p = &ptr;
+            lSize = &size;
+            break;
+        }
+        case sOET_fd:
+        {
+            p = ( void *** )&fd;
+            lSize = &fdSize;
+            break;
+        }
+        case sOET_sm:
+        {
+            p = ( void *** )&sh;
+            lSize = &shSize;
+            break;
+        }
+        case sOET_tj:
+        {
+            p = ( void *** )&thJ;
+            lSize = &thJSize;
+            break;
+        }
+        case sOET_tk:
+        {
+            p = ( void *** )&thK;
+            lSize = &thKSize;
+            break;
+        }
+        default:
+        {
+            return ( -3 );
+        }
+    }
+
+    if ( !*p )
+    { // initFreeOnExit not init
+        return ( -2 );
+    }
+
+    tmp = realloc ( *p, ( *lSize + nbEls ) * sizeof ( **p ) );
+    if ( !tmp )           // verifie que le pointeur à bien été réaloué
+    {
+        return ( -1 );
+    }
+    *p = tmp;
+
+    va_start ( vl, nbEls );
+    for ( i = 0; i < nbEls; i++ )
+    {
+        (*p)[ *lSize ] = va_arg ( vl, void* );   // on sauvegarde le parametre
+        (*lSize)++;
+    }
+
+    va_end ( vl );
+
+    return ( 0 );
 }
 
 int setFreeOnExit ( void * arg )
 {
-	void **tmp;           // pointeur temporaire
+    void **tmp;           // pointeur temporaire
 
-	if ( !ptr )
-	{
-		return ( -2 );
-	}
+    if ( !ptr )
+    {
+        return ( -2 );
+    }
 
-	tmp = ( void ** ) realloc ( ptr, ( size + 1 ) * sizeof ( void * ) );
-	if ( !tmp )           // verifie que le pointeur à bien été réaloué
-	{
-		return ( -1 );
-	}
+    tmp = ( void ** ) realloc ( ptr, ( size + 1 ) * sizeof ( void * ) );
+    if ( !tmp )           // verifie que le pointeur à bien été réaloué
+    {
+        return ( -1 );
+    }
 
-	ptr = tmp;
-	ptr [ size ] = arg;   // on sauvegarde le parametre
-	size++;
+    ptr = tmp;
+    ptr [ size ] = arg;   // on sauvegarde le parametre
+    size++;
 
-	return ( 0 );
+    return ( 0 );
 }
 
-int setCloseOnExit ( int * arg )
+int setCloseOnExit ( void * arg )
 {
     int **tmp;            // pointeur temporaire
 
@@ -114,7 +195,6 @@ int setCloseOnExit ( int * arg )
 int setDetachOnExit ( void * arg )
 {
     void **tmp;            // pointeur temporaire
-
     if ( !sh )
     {
         return ( -2 );
@@ -133,16 +213,16 @@ int setDetachOnExit ( void * arg )
     return ( 0 );
 }
 
-int setThreadJoinOnExit ( void * arg )
+int setThreadJoinOnExit ( pthread_t arg )
 {
-    pthread_t **tmp;            // pointeur temporaire
+    pthread_t *tmp;            // pointeur temporaire
 
     if ( !thJ )
     {
         return ( -2 );
     }
 
-    tmp = ( pthread_t ** ) realloc ( thJ, ( thJSize + 1 ) * sizeof ( pthread_t * ) );
+    tmp = ( pthread_t * ) realloc ( thJ, ( thJSize + 1 ) * sizeof ( pthread_t ) );
     if ( !tmp )           // verifie que le pointeur à bien été réaloué
     {
         return ( -1 );
@@ -155,16 +235,16 @@ int setThreadJoinOnExit ( void * arg )
     return ( 0 );
 }
 
-int setThreadKillOnExit ( void * arg )
+int setThreadKillOnExit ( pthread_t arg )
 {
-    pthread_t **tmp;            // pointeur temporaire
+    pthread_t *tmp;            // pointeur temporaire
 
     if ( !thK )
     {
         return ( -2 );
     }
 
-    tmp = ( pthread_t ** ) realloc ( thK, ( thKSize + 1 ) * sizeof ( pthread_t * ) );
+    tmp = ( pthread_t * ) realloc ( thK, ( thKSize + 1 ) * sizeof ( pthread_t ) );
     if ( !tmp )           // verifie que le pointeur à bien été réaloué
     {
         return ( -1 );
@@ -242,126 +322,127 @@ int setExecBeforeAllOnExit ( void * arg, void * param )
 // fonction apellé à la fin du programme sauf dans un cas d'appel à kill -9
 static void onExit ( void )
 {
-	uint64_t i;           // loop counter
-	
-	// function before
-	for ( i = 0; i < fnBSize; i++ )
-	{
-		if ( fnB[i] != 0 )     // évite le cas où le thread à deja été libéré
-		{
-			fnB[i] ( fnBArg[ i ] );
-		}
-	}
+    uint64_t i;           // loop counter
+    
+    // function before
+    for ( i = 0; i < fnBSize; i++ )
+    {
+        if ( fnB[i] != 0 )     // évite le cas où le thread à deja été libéré
+        {
+            fnB[i] ( fnBArg[ i ] );
+        }
+    }
 
-	if ( fnB != NULL )    // evit le cas où on à apellé deux fois init ( et donc atexit)
-	{
-		free ( fnB );
-		free ( fnBArg );
-		fnB = NULL;
-		fnBArg = NULL;
-		fnBSize = 0;
-	}
+    if ( fnB != NULL )    // evit le cas où on à apellé deux fois init ( et donc atexit)
+    {
+        free ( fnB );
+        free ( fnBArg );
+        fnB = NULL;
+        fnBArg = NULL;
+        fnBSize = 0;
+    }
 
-	// threads Join
-	for ( i = 0; i < thJSize; i++ )
-	{
-		if ( thJ[i] != 0 )     // évite le cas où le thread à deja été libéré
-		{
-			pthread_join ( *thJ[i], NULL );
-			thJ[i] = 0;
-		}
-	}
+    // threads Join
+    for ( i = 0; i < thJSize; i++ )
+    {
+        if ( thJ[i] != 0 )     // évite le cas où le thread à deja été libéré
+        {
+            pthread_join ( thJ[i], NULL );
+            thJ[i] = 0;
+        }
+    }
 
-	if ( thJ != NULL )    // evit le cas où on à apellé deux fois init ( et donc atexit)
-	{
-		free ( thJ );
-		thJ = NULL;
-		thJSize = 0;
-	}
+    if ( thJ != NULL )    // evit le cas où on à apellé deux fois init ( et donc atexit)
+    {
+        free ( thJ );
+        thJ = NULL;
+        thJSize = 0;
+    }
 
-	// threads Exit
-	for ( i = 0; i < thKSize; i++ )
-	{
-		if ( thK[i] != 0 )     // évite le cas où le thread à deja été libéré
-		{
-			pthread_kill ( *thK[i], 9 );
-			thK[i] = 0;
-		}
-	}
+    // threads Exit
+    for ( i = 0; i < thKSize; i++ )
+    {
+        if ( thK[i] != 0 )     // évite le cas où le thread à deja été libéré
+        {
+            pthread_kill ( thK[i], 9 );
+            pthread_join ( thK[i], NULL );
+            thK[i] = 0;
+        }
+    }
 
-	if ( thK != NULL )    // evit le cas où on à apellé deux fois init ( et donc atexit)
-	{
-		free ( thK );
-		thK = NULL;
-		thKSize = 0;
-	}
+    if ( thK != NULL )    // evit le cas où on à apellé deux fois init ( et donc atexit)
+    {
+        free ( thK );
+        thK = NULL;
+        thKSize = 0;
+    }
 
-	// pointer
-	for ( i = 0; i < size; i++ )
-	{
-		if ( ptr[i] != NULL )     // évite le cas où le pointeur à deja été libéré
-		{
-			free ( ptr[i] );
-			ptr[i] = NULL;
-		}
-	}
+    // pointer
+    for ( i = 0; i < size; i++ )
+    {
+        if ( ptr[i] != NULL )     // évite le cas où le pointeur à deja été libéré
+        {
+            free ( ptr[i] );
+            ptr[i] = NULL;
+        }
+    }
 
-	if ( ptr != NULL )    // evit le cas où on à apellé deux fois init ( et donc atexit)
-	{
-		free ( ptr );
-		ptr = NULL;
-		size = 0;
-	}
+    if ( ptr != NULL )    // evit le cas où on à apellé deux fois init ( et donc atexit)
+    {
+        free ( ptr );
+        ptr = NULL;
+        size = 0;
+    }
 
-	// files
-	for ( i = 0; i < fdSize; i++ )
-	{
-		if ( fd[i] != 0 )     // évite le cas où le pointeur à deja été libéré
-		{
-			close ( *fd[i] );
-			fd[i] = 0;
-		}
-	}
+    // files
+    for ( i = 0; i < fdSize; i++ )
+    {
+        if ( fd[i] != 0 )     // évite le cas où le pointeur à deja été libéré
+        {
+            close ( *fd[i] );
+            fd[i] = 0;
+        }
+    }
 
-	if ( fd != NULL )    // evit le cas où on à apellé deux fois init ( et donc atexit)
-	{
-		free ( fd );
-		fd = NULL;
-		fdSize = 0;
-	}
+    if ( fd != NULL )    // evit le cas où on à apellé deux fois init ( et donc atexit)
+    {
+        free ( fd );
+        fd = NULL;
+        fdSize = 0;
+    }
 
-	// shared memory
-	for ( i = 0; i < shSize; i++ )
-	{
-		if ( sh[i] != 0 )     // évite le cas où le pointeur à deja été libéré
-		{
-			shmdt ( sh[i] );
-			sh[i] = 0;
-		}
-	}
+    // shared memory
+    for ( i = 0; i < shSize; i++ )
+    {
+        if ( sh[i] != 0 )     // évite le cas où le pointeur à deja été libéré
+        {
+            shmdt ( sh[i] );
+            sh[i] = 0;
+        }
+    }
 
-	if ( sh != NULL )    // evit le cas où on à apellé deux fois init ( et donc atexit)
-	{
-		free ( sh );
-		sh = NULL;
-		shSize = 0;
-	}
+    if ( sh != NULL )    // evit le cas où on à apellé deux fois init ( et donc atexit)
+    {
+        free ( sh );
+        sh = NULL;
+        shSize = 0;
+    }
 
-	// function after
-	for ( i = 0; i < fnASize; i++ )
-	{
-		if ( fnA[i] != 0 )     // évite le cas où le thread à deja été libéré
-		{
-			fnA[i] ( fnAArg[ i ] );
-		}
-	}
+    // function after
+    for ( i = 0; i < fnASize; i++ )
+    {
+        if ( fnA[i] != 0 )     // évite le cas où le thread à deja été libéré
+        {
+            fnA[i] ( fnAArg[ i ] );
+        }
+    }
 
-	if ( fnA != NULL )    // evit le cas où on à apellé deux fois init ( et donc atexit)
-	{
-		free ( fnA );
-		free ( fnAArg );
-		fnA = NULL;
-		fnAArg = NULL;
-		fnASize = 0;
-	}
+    if ( fnA != NULL )    // evit le cas où on à apellé deux fois init ( et donc atexit)
+    {
+        free ( fnA );
+        free ( fnAArg );
+        fnA = NULL;
+        fnAArg = NULL;
+        fnASize = 0;
+    }
 }

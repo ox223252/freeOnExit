@@ -31,6 +31,14 @@
 /// \bug NONE
 ////////////////////////////////////////////////////////////////////////////////
 
+typedef enum
+{
+	sOET_ptr, // pointer
+	sOET_fd, // file descriptor
+	sOET_sm, // shared memory
+}
+steOnExitType;
+
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int initFreeOnExit ( void );
 ///
@@ -40,6 +48,23 @@
 ///         X : Error
 ////////////////////////////////////////////////////////////////////////////////
 int initFreeOnExit ( void );
+
+
+////////////////////////////////////////////////////////////////////////////////
+/// \fn int setOnExit ( steOnExitType type, int nbEls, ... )
+///
+/// \param [in] type : type of pointer
+/// \param [in] nbEls : nb of pointer
+/// \param [in] ... : arg pointers what will be free on exit
+///
+/// \brief save new pointer(s) need to be free on exit
+///
+/// \return 0 : OK
+///        -1 : new pointer not saved to be free later
+///        -2 : initFreeOnExit not made or failed
+///        -3 : type unknow
+////////////////////////////////////////////////////////////////////////////////
+int setOnExit ( steOnExitType type, int nbEls, ... );
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int setFreeOnExit ( void * ptr );
@@ -65,7 +90,7 @@ int setFreeOnExit ( void * ptr );
 ///        -1 : new fd not saved to be free later
 ///        -2 : initFreeOnExit not made or failed
 ////////////////////////////////////////////////////////////////////////////////
-int setCloseOnExit ( int * fd );
+int setCloseOnExit ( void * fd );
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int setDetachOnExit ( int * sh );
@@ -78,7 +103,7 @@ int setCloseOnExit ( int * fd );
 ///        -1 : new shared mem not saved to be detached later
 ///        -2 : initFreeOnExit not made or failed
 ////////////////////////////////////////////////////////////////////////////////
-int setDetachOnExit ( int * sh );
+int setDetachOnExit ( void * sh );
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int setThreadJoinOnExit ( pthread_h * pth );
@@ -91,7 +116,7 @@ int setDetachOnExit ( int * sh );
 ///        -1 : new pthread id not saved to be joined later
 ///        -2 : initFreeOnExit not made or failed
 ////////////////////////////////////////////////////////////////////////////////
-int setThreadJoinOnExit ( pthread_t * pth );
+int setThreadJoinOnExit ( pthread_t pth );
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int setThreadKillOnExit ( pthread_h * pth );
@@ -104,7 +129,7 @@ int setThreadJoinOnExit ( pthread_t * pth );
 ///        -1 : new pthread id not saved to be joined later
 ///        -2 : initFreeOnExit not made or failed
 ////////////////////////////////////////////////////////////////////////////////
-int setThreadKillOnExit ( pthread_t * pth );
+int setThreadKillOnExit ( pthread_t pth );
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int setExecAfterAllOnExit ( void ( * )( void * ), void * param );
