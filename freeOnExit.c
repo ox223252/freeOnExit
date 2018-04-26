@@ -25,15 +25,7 @@
 #include <pthread.h>
 #include <stdarg.h>
 
-typedef enum
-{
-    sOET_ptr, // pointer
-    sOET_fd, // file descriptor
-    sOET_sm, // shared memory
-    sOET_tj, // thread need to be joined
-    sOET_tk, // thread need to be killed
-}
-steOnExitType;
+#include "freeOnExit.h"
 
 static void onExit ( void );
 
@@ -104,18 +96,6 @@ int setOnExit ( steOnExitType type, int nbEls, ... )
         {
             p = ( void *** )&sh;
             lSize = &shSize;
-            break;
-        }
-        case sOET_tj:
-        {
-            p = ( void *** )&thJ;
-            lSize = &thJSize;
-            break;
-        }
-        case sOET_tk:
-        {
-            p = ( void *** )&thK;
-            lSize = &thKSize;
             break;
         }
         default:
@@ -257,7 +237,7 @@ int setThreadKillOnExit ( pthread_t arg )
     return ( 0 );
 }
 
-int setExecAfterAllOnExit ( void * arg, void * param )
+int setExecAfterAllOnExit ( void ( *fn )( void * ), void * param )
 {
     fnPtr *tmp;            // pointeur temporaire
     void **tmp2;            // pointeur temporaire
@@ -281,14 +261,14 @@ int setExecAfterAllOnExit ( void * arg, void * param )
     }
     fnAArg = tmp2;
 
-    fnA [ fnASize ] = arg;   // on sauvegarde le parametre
+    fnA [ fnASize ] = fn;   // on sauvegarde le parametre
     fnAArg [ fnASize ] = param;   // on sauvegarde le parametre
     fnASize++;
 
     return ( 0 );
 }
 
-int setExecBeforeAllOnExit ( void * arg, void * param )
+int setExecBeforeAllOnExit ( void ( *fn )( void * ), void * param )
 {
     fnPtr *tmp;            // pointeur temporaire
     void **tmp2;            // pointeur temporaire
@@ -312,7 +292,7 @@ int setExecBeforeAllOnExit ( void * arg, void * param )
     }
     fnBArg = tmp2;
 
-    fnB [ fnBSize ] = arg;   // on sauvegarde le parametre
+    fnB [ fnBSize ] = fn;   // on sauvegarde le parametre
     fnBArg [ fnBSize ] = param;   // on sauvegarde le parametre
     fnBSize++;
 
