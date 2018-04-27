@@ -15,15 +15,16 @@
 ///     this program. If not, see <http://www.gnu.org/licenses/>
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <sys/socket.h>
+#include <fcntl.h>
+#include <pthread.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <unistd.h>
-#include <errno.h>
 #include <sys/shm.h>
 #include <signal.h>
-#include <pthread.h>
+#include <sys/socket.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 #include "freeOnExit.h"
 
@@ -32,8 +33,11 @@ static void onExit ( void );
 static void **ptr;        // double pointeur qui sauvegarde les differents pointeur à liberer
 static uint64_t size = 0; // nombre de pointeur à liberer
 
-static int **fd;          // pointeur qui sauvegarde les differents file descripteur à fermer
+static FILE **fd;          // pointeur qui sauvegarde les differents file descripteur à fermer
 static uint64_t fdSize = 0; // nombre de fd à fermer
+
+static int *cl;          // pointeur qui sauvegarde les differents file descripteur à fermer
+static uint64_t clSize = 0; // nombre de fd à fermer
 
 static void **sh;          // pointeur qui sauvegarde les differents file descripteur à fermer
 static uint64_t shSize = 0; // nombre de fd à fermer
@@ -59,6 +63,7 @@ int initFreeOnExit ( void )
 {
     ptr = malloc ( sizeof ( *ptr ) );
     fd = malloc ( sizeof ( *fd ) );
+    cl = malloc ( sizeof ( *cl ) );
     sh = malloc ( sizeof ( *sh ) );
     thJ = malloc ( sizeof ( *thJ ) );
     thK = malloc ( sizeof ( *thK ) );
@@ -150,16 +155,16 @@ int setFreeOnExit ( void * arg )
     return ( 0 );
 }
 
-int setCloseOnExit ( void * arg )
+int setFCloseOnExit ( void * arg )
 {
-    int **tmp;            // pointeur temporaire
+    FILE **tmp;            // pointeur temporaire
 
     if ( !fd )
     {
         return ( -2 );
     }
 
-    tmp = ( int ** ) realloc ( fd, ( fdSize + 1 ) * sizeof ( int * ) );
+    tmp = ( FILE ** ) realloc ( fd, ( fdSize + 1 ) * sizeof ( FILE * ) );
     if ( !tmp )           // verifie que le pointeur à bien été réaloué
     {
         return ( -1 );
@@ -168,6 +173,28 @@ int setCloseOnExit ( void * arg )
     fd = tmp;
     fd [ fdSize ] = arg;   // on sauvegarde le parametre
     fdSize++;
+
+    return ( 0 );
+}
+
+int setCloseOnExit ( int arg )
+{
+    int *tmp;            // pointeur temporaire
+
+    if ( !cl )
+    {
+        return ( -2 );
+    }
+
+    tmp = ( int * ) realloc ( cl, ( clSize + 1 ) * sizeof ( int ) );
+    if ( !tmp )           // verifie que le pointeur à bien été réaloué
+    {
+        return ( -1 );
+    }
+
+    cl = tmp;
+    cl [ clSize ] = arg;   // on sauvegarde le parametre
+    clSize++;
 
     return ( 0 );
 }
@@ -379,7 +406,7 @@ static void onExit ( void )
     {
         if ( fd[i] != 0 )     // évite le cas où le pointeur à deja été libéré
         {
-            close ( *fd[i] );
+            fclose ( fd[i] );
             fd[i] = 0;
         }
     }
@@ -389,6 +416,23 @@ static void onExit ( void )
         free ( fd );
         fd = NULL;
         fdSize = 0;
+    }
+
+    // file
+    for ( i = 0; i < clSize; i++ )
+    {
+        if ( cl[i] != 0 )     // évite le cas où le pointeur à deja été libéré
+        {
+            close ( cl[i] );
+            cl[i] = 0;
+        }
+    }
+
+    if ( cl != NULL )    // evit le cas où on à apellé deux fois init ( et donc atexit)
+    {
+        free ( cl );
+        cl = NULL;
+        clSize = 0;
     }
 
     // shared memory

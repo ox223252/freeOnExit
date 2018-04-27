@@ -8,12 +8,13 @@ git clone https://github.com/ox223252/freeOnExit.git
 
 ## Usage:
 ```C
-#include <stdlib.h>
+#include <fcntl.h>
+#include <pthread.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
-#include <stdint.h>
-#include <pthread.h>
 #include <unistd.h>
 
 #include "freeOnExit.h"
@@ -49,6 +50,7 @@ int main ( void )
 
     char * data;
     int shmid = 0;
+    int fd = 0;
 
     pthread_t threadId1;
     pthread_t threadId2;
@@ -69,9 +71,12 @@ int main ( void )
     c = ( char * ) malloc ( 10 );
     setOnExit ( sOET_ptr, 1, c );
 
-    // file
-    f = fopen ( "file", "rw" );
+    // files
+    f = fopen ( "a.out", "rw" );
     setOnExit ( sOET_fd, 1, f );
+
+    fd = open ( "a.out", O_RDWR );
+    setCloseOnExit ( fd );
 
     // shared memory
     if ( ( shmid = shmget ( 12345, 12, 0644 | IPC_CREAT ) ) == -1 )
@@ -107,11 +112,11 @@ int main ( void )
 ```C
 $ gcc -Wall main.c freeOnExit.c -pthread 
 $ valgrind --leak-check=full ./a.out
-==54361== Memcheck, a memory error detector
-==54361== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
-==54361== Using Valgrind-3.11.0 and LibVEX; rerun with -h for copyright info
-==54361== Command: ./a.out
-==54361==
+==70226== Memcheck, a memory error detector
+==70226== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
+==70226== Using Valgrind-3.11.0 and LibVEX; rerun with -h for copyright info
+==70226== Command: ./a.out
+==70226==
 wait join
 loop kill
 before
@@ -119,22 +124,22 @@ loop kill
 loop kill
 loop kill
 All done
-==54361==
-==54361== HEAP SUMMARY:
-==54361==     in use at exit: 0 bytes in 0 blocks
-==54361==   total heap usage: 33 allocs, 33 frees, 4,038 bytes allocated
-==54361==
-==54361== All heap blocks were freed -- no leaks are possible
-==54361==
-==54361== For counts of detected and suppressed errors, rerun with: -v
-==54361== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
-
+==70226==
+==70226== HEAP SUMMARY:
+==70226==     in use at exit: 0 bytes in 0 blocks
+==70226==   total heap usage: 35 allocs, 35 frees, 4,046 bytes allocated
+==70226==
+==70226== All heap blocks were freed -- no leaks are possible
+==70226==
+==70226== For counts of detected and suppressed errors, rerun with: -v
+==70226== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
 ```
 
 ## Execution sequence:
 - 'function before'
 - thread
 - pointer
-- files
+- files (fopen/fclose)
+- files (open/close)
 - shared memory
 - 'function after'

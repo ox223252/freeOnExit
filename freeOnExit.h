@@ -26,7 +26,7 @@
 /// \author ox223252
 /// \date 2017-07
 /// \copyright GPLv2
-/// \version 0.1
+/// \version 0.2
 /// \warning NONE
 /// \bug NONE
 ////////////////////////////////////////////////////////////////////////////////
@@ -34,7 +34,7 @@
 typedef enum
 {
 	sOET_ptr, // pointer
-	sOET_fd, // file descriptor
+	sOET_fd, // file descriptor (fopen/fclose)
 	sOET_sm, // shared memory
 }
 steOnExitType;
@@ -80,6 +80,19 @@ int setOnExit ( steOnExitType type, int nbEls, ... );
 int setFreeOnExit ( void * ptr );
 
 ////////////////////////////////////////////////////////////////////////////////
+/// \fn int setFCloseOnExit ( int * fd );
+///
+/// \param [in] fd : arg file descriptor what will be closed on exit
+///
+/// \brief save new file descriptor need to be closed on exit
+///
+/// \return 0 : OK
+///        -1 : new fd not saved to be free later
+///        -2 : initFreeOnExit not made or failed
+////////////////////////////////////////////////////////////////////////////////
+int setFCloseOnExit ( void * fd );
+
+////////////////////////////////////////////////////////////////////////////////
 /// \fn int setCloseOnExit ( int * fd );
 ///
 /// \param [in] fd : arg file descriptor what will be closed on exit
@@ -90,7 +103,7 @@ int setFreeOnExit ( void * ptr );
 ///        -1 : new fd not saved to be free later
 ///        -2 : initFreeOnExit not made or failed
 ////////////////////////////////////////////////////////////////////////////////
-int setCloseOnExit ( void * fd );
+int setCloseOnExit ( int fd );
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int setDetachOnExit ( int * sh );
