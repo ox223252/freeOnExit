@@ -58,9 +58,19 @@ static fnPtr * fnB;       // function executed before execut every free on exit
 static void ** fnBArg;
 static uint64_t fnBSize = 0;
 
+static struct
+{
+    uint8_t init:1;
+}
+_fOE_flags = { 0 };
 
 int initFreeOnExit ( void )
 {
+    if ( _fOE_flags.init )
+    {
+        return ( 0 );
+    }
+
     ptr = malloc ( sizeof ( *ptr ) );
     fd = malloc ( sizeof ( *fd ) );
     cl = malloc ( sizeof ( *cl ) );
@@ -72,7 +82,14 @@ int initFreeOnExit ( void )
     fnB =  malloc ( sizeof ( *fnB ) );
     fnBArg =  malloc ( sizeof ( *fnBArg ) );
 
-    return ( atexit ( onExit ) );
+    if ( atexit ( onExit ) )
+    {
+        return ( __LINE__ );
+    }
+
+    _fOE_flags.init = 1;
+    
+    return ( 0 );
 }
 
 int setOnExit ( steOnExitType type, int nbEls, ... )
