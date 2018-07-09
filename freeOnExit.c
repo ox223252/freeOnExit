@@ -48,6 +48,9 @@ static uint64_t thJSize = 0; // nombre de thread à kill
 static pthread_t *thK;    // pointeur qui sauvegarde les differents pointeur sur threads
 static uint64_t thKSize = 0; // nombre de thread à kill
 
+static void **dl;          // pointeur qui sauvegarde les differents pointeur sur dll
+static uint64_t dlSize = 0; // nombre de dll a close
+
 typedef void ( *fnPtr )( void * );
 
 static fnPtr * fnA;       // function executed after execut every free on exit
@@ -72,15 +75,27 @@ int initFreeOnExit ( void )
     }
 
     ptr = malloc ( sizeof ( *ptr ) );
+    *ptr = NULL;
     fd = malloc ( sizeof ( *fd ) );
+    *fd = NULL;
     cl = malloc ( sizeof ( *cl ) );
+    *cl = NULL;
     sh = malloc ( sizeof ( *sh ) );
+    *sh = NULL;
     thJ = malloc ( sizeof ( *thJ ) );
+    *thJ = NULL;
     thK = malloc ( sizeof ( *thK ) );
+    *thK = NULL;
     fnA = malloc ( sizeof ( *fnA) );
+    *fnA = NULL;
     fnAArg =  malloc ( sizeof ( *fnAArg ) );
+    *fnAArg = NULL;
     fnB =  malloc ( sizeof ( *fnB ) );
+    *fnB = NULL;
     fnBArg =  malloc ( sizeof ( *fnBArg ) );
+    *fnBArg = NULL;
+    dl =  malloc ( sizeof ( void * ) );
+    *dl = NULL;
 
     if ( atexit ( onExit ) )
     {
@@ -212,6 +227,28 @@ int setCloseOnExit ( int arg )
     cl = tmp;
     cl [ clSize ] = arg;   // on sauvegarde le parametre
     clSize++;
+
+    return ( 0 );
+}
+
+int setDlCloseOnExit ( void * arg )
+{
+    int *tmp;            // pointeur temporaire
+
+    if ( !dl )
+    {
+        return ( -2 );
+    }
+
+    tmp = realloc ( dl, ( dlSize + 1 ) * sizeof ( void * ) );
+    if ( !tmp )           // verifie que le pointeur à bien été réaloué
+    {
+        return ( -1 );
+    }
+
+    dl = tmp;
+    dl [ dlSize ] = arg;   // on sauvegarde le parametre
+    dlSize++;
 
     return ( 0 );
 }
@@ -450,6 +487,23 @@ static void onExit ( void )
         free ( cl );
         cl = NULL;
         clSize = 0;
+    }
+
+    // dll
+    for ( i = 0; i < dlSize; i++ )
+    {
+        if ( dl[i] != 0 )     // évite le cas où le pointeur à deja été libéré
+        {
+            dlclose ( dl[i] );
+            dl[i] = NULL;
+        }
+    }
+
+    if ( dl != NULL )    // evit le cas où on à apellé deux fois init ( et donc atexit)
+    {
+        free ( dl );
+        dl = NULL;
+        dlSize = 0;
     }
 
     // shared memory
