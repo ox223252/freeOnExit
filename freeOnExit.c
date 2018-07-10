@@ -15,8 +15,13 @@
 ///     this program. If not, see <http://www.gnu.org/licenses/>
 ////////////////////////////////////////////////////////////////////////////////
 
+#ifndef FOE_WITHOUT_DLL
+#include <dlfcn.h>
+#endif
 #include <fcntl.h>
+#ifndef FOE_WITHOUT_THREAD
 #include <pthread.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -25,7 +30,6 @@
 #include <sys/socket.h>
 #include <stdarg.h>
 #include <unistd.h>
-#include <dlfcn.h>
 
 #include "freeOnExit.h"
 
@@ -43,14 +47,18 @@ static uint64_t clSize = 0; // nombre de fd à fermer
 static void **sh;          // pointeur qui sauvegarde les differents file descripteur à fermer
 static uint64_t shSize = 0; // nombre de fd à fermer
 
+#ifndef FOE_WITHOUT_THREAD
 static pthread_t *thJ;    // pointeur qui sauvegarde les differents pointeur sur threads
 static uint64_t thJSize = 0; // nombre de thread à kill
 
 static pthread_t *thK;    // pointeur qui sauvegarde les differents pointeur sur threads
 static uint64_t thKSize = 0; // nombre de thread à kill
+#endif
 
+#ifndef FOE_WITHOUT_DLL
 static void **dl;          // pointeur qui sauvegarde les differents pointeur sur dll
 static uint64_t dlSize = 0; // nombre de dll a close
+#endif
 
 typedef void ( *fnPtr )( void * );
 
@@ -83,10 +91,12 @@ int initFreeOnExit ( void )
     *cl = 0;
     sh = malloc ( sizeof ( *sh ) );
     *sh = NULL;
+#ifndef FOE_WITHOUT_THREAD
     thJ = malloc ( sizeof ( *thJ ) );
     *thJ = 0;
     thK = malloc ( sizeof ( *thK ) );
     *thK = 0;
+#endif
     fnA = malloc ( sizeof ( *fnA) );
     *fnA = NULL;
     fnAArg =  malloc ( sizeof ( *fnAArg ) );
@@ -95,8 +105,10 @@ int initFreeOnExit ( void )
     *fnB = NULL;
     fnBArg =  malloc ( sizeof ( *fnBArg ) );
     *fnBArg = NULL;
+#ifndef FOE_WITHOUT_DLL
     dl =  malloc ( sizeof ( void * ) );
     *dl = NULL;
+#endif
 
     if ( atexit ( onExit ) )
     {
@@ -232,6 +244,7 @@ int setCloseOnExit ( int arg )
     return ( 0 );
 }
 
+#ifndef FOE_WITHOUT_DLL
 int setDlCloseOnExit ( void * arg )
 {
     void **tmp;            // pointeur temporaire
@@ -253,6 +266,7 @@ int setDlCloseOnExit ( void * arg )
 
     return ( 0 );
 }
+#endif
 
 int setDetachOnExit ( void * arg )
 {
@@ -275,6 +289,7 @@ int setDetachOnExit ( void * arg )
     return ( 0 );
 }
 
+#ifndef FOE_WITHOUT_THREAD
 int setThreadJoinOnExit ( pthread_t arg )
 {
     pthread_t *tmp;            // pointeur temporaire
@@ -318,6 +333,7 @@ int setThreadKillOnExit ( pthread_t arg )
 
     return ( 0 );
 }
+#endif
 
 int setExecAfterAllOnExit ( void ( *fn )( void * ), void * param )
 {
@@ -404,6 +420,7 @@ static void onExit ( void )
         fnBSize = 0;
     }
 
+#ifndef FOE_WITHOUT_THREAD
     // threads Join
     for ( i = 0; i < thJSize; i++ )
     {
@@ -438,6 +455,7 @@ static void onExit ( void )
         thK = NULL;
         thKSize = 0;
     }
+#endif
 
     // pointer
     for ( i = 0; i < size; i++ )
@@ -490,6 +508,7 @@ static void onExit ( void )
         clSize = 0;
     }
 
+#ifndef FOE_WITHOUT_DLL
     // dll
     for ( i = 0; i < dlSize; i++ )
     {
@@ -506,6 +525,8 @@ static void onExit ( void )
         dl = NULL;
         dlSize = 0;
     }
+#endif
+
 
     // shared memory
     for ( i = 0; i < shSize; i++ )

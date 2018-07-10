@@ -19,6 +19,14 @@
 
 #include <pthread.h>
 
+#ifndef FOE_WITH_THREAD
+#define FOE_WITHOUT_THREAD
+#endif
+
+#ifndef FOE_WITH_DLL
+#define FOE_WITHOUT_DLL
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
 /// \file freeOnExit.h
 /// \brief library store and free / close pointer an file descriptor at the end
@@ -26,7 +34,7 @@
 /// \author ox223252
 /// \date 2017-07
 /// \copyright GPLv2
-/// \version 0.3
+/// \version 0.4
 /// \warning NONE
 /// \bug NONE
 ////////////////////////////////////////////////////////////////////////////////

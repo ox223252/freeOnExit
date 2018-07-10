@@ -1,8 +1,12 @@
 # freeOnExit
 Created to simplify automatic memory release
 
-## Notes:
-in full use this li depend on pthread and ldl libs, if you don't need these one, youy shoudl comment pthread function and dll function in the sources.
+Designed for Linux
+
+## How to use:
+You can use freeOnExit lib with or without pthread and/or dll.
+To use pthread/dll define `FOE_WITH_THREAD`/`FOE_WITH_DLL` or comment in the header `FOE_WITHOUT_THREAD`/`FOE_WITHOUT_DLL`.
+
 
 ## Get:
 ```Shell
@@ -113,7 +117,7 @@ int main ( void )
 
 ## Execution test:
 ```C
-$ gcc -Wall main.c freeOnExit.c -pthread 
+$ gcc -Wall main.c freeOnExit.c -pthread -D'FOE_WITH_THREAD'
 $ valgrind --leak-check=full ./a.out
 ==70226== Memcheck, a memory error detector
 ==70226== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
@@ -140,9 +144,10 @@ All done
 
 ## Execution sequence:
 - 'function before'
-- thread
+- thread `#ifdef FOE_WITH_THREAD`
 - pointer
 - files (fopen/fclose)
 - files (open/close)
+- dll `#ifdef FOE_WITH_DLL`
 - shared memory
 - 'function after'
