@@ -25,6 +25,7 @@
 #include <sys/socket.h>
 #include <stdarg.h>
 #include <unistd.h>
+#include <dlfcn.h>
 
 #include "freeOnExit.h"
 
@@ -79,13 +80,13 @@ int initFreeOnExit ( void )
     fd = malloc ( sizeof ( *fd ) );
     *fd = NULL;
     cl = malloc ( sizeof ( *cl ) );
-    *cl = NULL;
+    *cl = 0;
     sh = malloc ( sizeof ( *sh ) );
     *sh = NULL;
     thJ = malloc ( sizeof ( *thJ ) );
-    *thJ = NULL;
+    *thJ = 0;
     thK = malloc ( sizeof ( *thK ) );
-    *thK = NULL;
+    *thK = 0;
     fnA = malloc ( sizeof ( *fnA) );
     *fnA = NULL;
     fnAArg =  malloc ( sizeof ( *fnAArg ) );
@@ -233,7 +234,7 @@ int setCloseOnExit ( int arg )
 
 int setDlCloseOnExit ( void * arg )
 {
-    int *tmp;            // pointeur temporaire
+    void **tmp;            // pointeur temporaire
 
     if ( !dl )
     {
