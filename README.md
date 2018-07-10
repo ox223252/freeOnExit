@@ -1,6 +1,9 @@
 # freeOnExit
 Created to simplify automatic memory release
 
+## Notes:
+in full use this li depend on pthread and ldl libs, if you don't need these one, youy shoudl comment pthread function and dll function in the sources.
+
 ## Get:
 ```Shell
 git clone https://github.com/ox223252/freeOnExit.git
