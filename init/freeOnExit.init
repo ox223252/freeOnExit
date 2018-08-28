@@ -1,0 +1,7 @@
+@ after END_SIGNALHANDLER INIT_CORE
+	// INIT_FREEONEXIT
+	if ( initFreeOnExit ( ) )
+	{ // failure case
+	}
+	// END_FREEONEXIT
+	
