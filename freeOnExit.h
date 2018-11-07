@@ -34,8 +34,8 @@
 /// \author ox223252
 /// \date 2017-07
 /// \copyright GPLv2
-/// \version 0.4
-/// \warning NONE
+/// \version 0.4.1
+/// \warning v0.4.1 not fully tested
 /// \bug NONE
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -86,6 +86,7 @@ int setOnExit ( steOnExitType type, int nbEls, ... );
 ///        -2 : initFreeOnExit not made or failed
 ////////////////////////////////////////////////////////////////////////////////
 int setFreeOnExit ( void * ptr );
+void unsetFreeOnExit ( void * ptr );
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int setFCloseOnExit ( int * fd );
@@ -99,6 +100,7 @@ int setFreeOnExit ( void * ptr );
 ///        -2 : initFreeOnExit not made or failed
 ////////////////////////////////////////////////////////////////////////////////
 int setFCloseOnExit ( void * fd );
+void unsetFCloseOnExit ( void * fd );
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int setCloseOnExit ( int * fd );
@@ -112,6 +114,7 @@ int setFCloseOnExit ( void * fd );
 ///        -2 : initFreeOnExit not made or failed
 ////////////////////////////////////////////////////////////////////////////////
 int setCloseOnExit ( int fd );
+void unsetCloseOnExit ( int fd );
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -126,6 +129,7 @@ int setCloseOnExit ( int fd );
 ///        -2 : initFreeOnExit not made or failed
 ////////////////////////////////////////////////////////////////////////////////
 int setDlCloseOnExit ( void * dl );
+void unsetDlCloseOnExit ( void * dl );
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int setDetachOnExit ( int * sh );
@@ -139,6 +143,7 @@ int setDlCloseOnExit ( void * dl );
 ///        -2 : initFreeOnExit not made or failed
 ////////////////////////////////////////////////////////////////////////////////
 int setDetachOnExit ( void * sh );
+void unsetDetachOnExit ( void * sh );
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int setThreadJoinOnExit ( pthread_h * pth );
@@ -152,6 +157,7 @@ int setDetachOnExit ( void * sh );
 ///        -2 : initFreeOnExit not made or failed
 ////////////////////////////////////////////////////////////////////////////////
 int setThreadJoinOnExit ( pthread_t pth );
+void unsetThreadJoinOnExit ( pthread_t pth );
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int setThreadKillOnExit ( pthread_h * pth );
@@ -165,6 +171,7 @@ int setThreadJoinOnExit ( pthread_t pth );
 ///        -2 : initFreeOnExit not made or failed
 ////////////////////////////////////////////////////////////////////////////////
 int setThreadKillOnExit ( pthread_t pth );
+void unsetThreadKillOnExit ( pthread_t pth );
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int setExecAfterAllOnExit ( void ( * )( void * ), void * param );
@@ -179,6 +186,7 @@ int setThreadKillOnExit ( pthread_t pth );
 ///        -2 : initFreeOnExit not made or failed
 ////////////////////////////////////////////////////////////////////////////////
 int setExecAfterAllOnExit ( void ( *fn )( void * ), void * param );
+void unsetExecAfterAllOnExit ( void ( *fn )( void * ) );
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int setExecBeforeAllOnExit ( void ( * )( void * ), void * param );
@@ -193,6 +201,7 @@ int setExecAfterAllOnExit ( void ( *fn )( void * ), void * param );
 ///        -2 : initFreeOnExit not made or failed
 ////////////////////////////////////////////////////////////////////////////////
 int setExecBeforeAllOnExit ( void ( *fn )( void * ), void * param );
+void unsetExecBeforeAllOnExit ( void ( *fn )( void * ) );
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \note Execution sequence :

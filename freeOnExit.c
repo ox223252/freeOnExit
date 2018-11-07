@@ -178,6 +178,18 @@ int setOnExit ( steOnExitType type, int nbEls, ... )
     return ( 0 );
 }
 
+void unsetFreeOnExit ( void * arg )
+{
+    uint64_t i = 0;
+    for ( i = 0; i < size; i++ )
+    {
+        if ( ptr [ i ] == arg )
+        {
+            ptr [ i ] = NULL;
+        }
+    }
+}
+
 int setFreeOnExit ( void * arg )
 {
     void **tmp;           // pointeur temporaire
@@ -200,6 +212,18 @@ int setFreeOnExit ( void * arg )
     return ( 0 );
 }
 
+void unsetFCloseOnExit ( void * arg )
+{
+    uint64_t i = 0;
+    for ( i = 0; i < fdSize; i++ )
+    {
+        if ( fd [ i ] == arg )
+        {
+            fd [ i ] = NULL;
+        }
+    }
+}
+
 int setFCloseOnExit ( void * arg )
 {
     FILE **tmp;            // pointeur temporaire
@@ -220,6 +244,18 @@ int setFCloseOnExit ( void * arg )
     fdSize++;
 
     return ( 0 );
+}
+
+void unsetCloseOnExit ( void * arg )
+{
+    uint64_t i = 0;
+    for ( i = 0; i < clSize; i++ )
+    {
+        if ( cl [ i ] == arg )
+        {
+            cl [ i ] = 0;
+        }
+    }
 }
 
 int setCloseOnExit ( int arg )
@@ -245,6 +281,18 @@ int setCloseOnExit ( int arg )
 }
 
 #ifndef FOE_WITHOUT_DLL
+void unsetDlCloseOnExit ( void * arg )
+{
+    uint64_t i = 0;
+    for ( i = 0; i < dlSize; i++ )
+    {
+        if ( dl [ i ] == arg )
+        {
+            dl [ i ] = NULL;
+        }
+    }
+}
+
 int setDlCloseOnExit ( void * arg )
 {
     void **tmp;            // pointeur temporaire
@@ -268,6 +316,18 @@ int setDlCloseOnExit ( void * arg )
 }
 #endif
 
+void unsetDetachOnExit ( void * arg )
+{
+    uint64_t i = 0;
+    for ( i = 0; i < shSize; i++ )
+    {
+        if ( sh [ i ] == arg )
+        {
+            sh [ i ] = NULL;
+        }
+    }
+}
+
 int setDetachOnExit ( void * arg )
 {
     void **tmp;            // pointeur temporaire
@@ -290,6 +350,18 @@ int setDetachOnExit ( void * arg )
 }
 
 #ifndef FOE_WITHOUT_THREAD
+void unsetThreadJoinOnExit ( void * arg )
+{
+    uint64_t i = 0;
+    for ( i = 0; i < thJSize; i++ )
+    {
+        if ( thJ [ i ] == arg )
+        {
+            thJ [ i ] = 0;
+        }
+    }
+}
+
 int setThreadJoinOnExit ( pthread_t arg )
 {
     pthread_t *tmp;            // pointeur temporaire
@@ -310,6 +382,18 @@ int setThreadJoinOnExit ( pthread_t arg )
     thJSize++;
 
     return ( 0 );
+}
+
+void unsetThreadKillOnExit ( void * arg )
+{
+    uint64_t i = 0;
+    for ( i = 0; i < thKSize; i++ )
+    {
+        if ( thK [ i ] == arg )
+        {
+            thK [ i ] = 0;
+        }
+    }
 }
 
 int setThreadKillOnExit ( pthread_t arg )
@@ -334,6 +418,18 @@ int setThreadKillOnExit ( pthread_t arg )
     return ( 0 );
 }
 #endif
+
+void unsetExecAfterAllOnExit ( void ( *fn )( void * ) )
+{
+    uint64_t i = 0;
+    for ( i = 0; i < fnASize; i++ )
+    {
+        if ( fnA [ i ] == fn )
+        {
+            fnA [ i ] = 0;
+        }
+    }
+}
 
 int setExecAfterAllOnExit ( void ( *fn )( void * ), void * param )
 {
@@ -364,6 +460,18 @@ int setExecAfterAllOnExit ( void ( *fn )( void * ), void * param )
     fnASize++;
 
     return ( 0 );
+}
+
+void unsetExecBeforeAllOnExit ( void ( *fn )( void * ) )
+{
+    uint64_t i = 0;
+    for ( i = 0; i < fnBSize; i++ )
+    {
+        if ( fnB [ i ] == fn )
+        {
+            fnB [ i ] = 0;
+        }
+    }
 }
 
 int setExecBeforeAllOnExit ( void ( *fn )( void * ), void * param )
