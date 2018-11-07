@@ -246,7 +246,7 @@ int setFCloseOnExit ( void * arg )
     return ( 0 );
 }
 
-void unsetCloseOnExit ( void * arg )
+void unsetCloseOnExit ( int arg )
 {
     uint64_t i = 0;
     for ( i = 0; i < clSize; i++ )
@@ -350,7 +350,7 @@ int setDetachOnExit ( void * arg )
 }
 
 #ifndef FOE_WITHOUT_THREAD
-void unsetThreadJoinOnExit ( void * arg )
+void unsetThreadJoinOnExit ( pthread_t arg )
 {
     uint64_t i = 0;
     for ( i = 0; i < thJSize; i++ )
@@ -384,7 +384,7 @@ int setThreadJoinOnExit ( pthread_t arg )
     return ( 0 );
 }
 
-void unsetThreadKillOnExit ( void * arg )
+void unsetThreadKillOnExit ( pthread_t arg )
 {
     uint64_t i = 0;
     for ( i = 0; i < thKSize; i++ )
