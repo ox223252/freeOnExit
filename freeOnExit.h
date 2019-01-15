@@ -27,6 +27,10 @@
 #define FOE_WITHOUT_DLL
 #endif
 
+#if defined ( _WIN64 ) || defined ( _WIN32 )
+#define FOE_WITHOUT_SHMD
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
 /// \file freeOnExit.h
 /// \brief library store and free / close pointer an file descriptor at the end
@@ -34,8 +38,8 @@
 /// \author ox223252
 /// \date 2017-07
 /// \copyright GPLv2
-/// \version 0.4.1
-/// \warning v0.4.1 not fully tested
+/// \version 1.0
+/// \warning v1.0
 /// \bug NONE
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -117,6 +121,7 @@ int setCloseOnExit ( int fd );
 void unsetCloseOnExit ( int fd );
 
 
+#ifndef FOE_WITHOUT_DLL
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int setDlCloseOnExit ( int * fd );
 ///
@@ -130,7 +135,9 @@ void unsetCloseOnExit ( int fd );
 ////////////////////////////////////////////////////////////////////////////////
 int setDlCloseOnExit ( void * dl );
 void unsetDlCloseOnExit ( void * dl );
+#endif
 
+#ifndef FOE_WITHOUT_SHMD
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int setDetachOnExit ( int * sh );
 ///
@@ -144,6 +151,22 @@ void unsetDlCloseOnExit ( void * dl );
 ////////////////////////////////////////////////////////////////////////////////
 int setDetachOnExit ( void * sh );
 void unsetDetachOnExit ( void * sh );
+#endif
+
+#ifndef FOE_WITHOUT_THREAD
+////////////////////////////////////////////////////////////////////////////////
+/// \fn int setThreadJoinOnExit ( pthread_h * pth );
+///
+/// \param [in] pth : pthread id of thread
+///
+/// \brief save new thread id need to be canceled on exit
+///
+/// \return 0 : OK
+///        -1 : new pthread id not saved to be joined later
+///        -2 : initFreeOnExit not made or failed
+////////////////////////////////////////////////////////////////////////////////
+void unsetThreadCancelOnExit ( pthread_t arg );
+int setThreadCancelOnExit ( pthread_t arg );
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int setThreadJoinOnExit ( pthread_h * pth );
@@ -170,8 +193,9 @@ void unsetThreadJoinOnExit ( pthread_t pth );
 ///        -1 : new pthread id not saved to be joined later
 ///        -2 : initFreeOnExit not made or failed
 ////////////////////////////////////////////////////////////////////////////////
-int setThreadKillOnExit ( pthread_t pth );
-void unsetThreadKillOnExit ( pthread_t pth );
+int setThreadKillOnExit ( pthread_t pth ) __attribute__ ((deprecated));
+void unsetThreadKillOnExit ( pthread_t pth ) __attribute__ ((deprecated));
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int setExecAfterAllOnExit ( void ( * )( void * ), void * param );
