@@ -31,6 +31,10 @@
 #define FOE_WITHOUT_SHMD
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
 /// \file freeOnExit.h
 /// \brief library store and free / close pointer an file descriptor at the end
@@ -236,5 +240,9 @@ void unsetExecBeforeAllOnExit ( void ( *fn )( void * ) );
 ///     - shared memory
 ///     - 'function after'
 ////////////////////////////////////////////////////////////////////////////////
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
