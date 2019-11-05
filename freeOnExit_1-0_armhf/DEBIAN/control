@@ -1,0 +1,9 @@
+Package: freeOnExit-dev
+Version: 1.0
+Section: main
+Priority: standard
+Architecture: armhf
+Depends:
+Maintainer: dev <23252@laposte.net>
+Description: libération asynchrone de la memoire
+Homepage: https://github.com/ox223252/freeOnExit
